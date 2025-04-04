@@ -13,16 +13,37 @@ export default function ReviewManagement() {
 
   const fetchReviews = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
       const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('Нет токена авторизации')
+      }
+      
       const response = await fetch('http://localhost:5000/api/manager/reviews', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Ошибка ответа сервера:', response.status, errorData)
+        throw new Error(errorData.message || 'Ошибка при загрузке отзывов')
+      }
+      
       const data = await response.json()
-      setReviews(data)
+      
+      if (Array.isArray(data)) {
+        setReviews(data)
+      } else {
+        console.warn('Сервер вернул не массив:', data)
+        setReviews([])
+      }
     } catch (err) {
-      setError('Ошибка при загрузке отзывов')
+      console.error('Ошибка при загрузке отзывов:', err)
+      setError('Ошибка при загрузке отзывов: ' + (err.message || 'Неизвестная ошибка'))
     } finally {
       setLoading(false)
     }
@@ -71,7 +92,7 @@ export default function ReviewManagement() {
               <div>
                 <div className="flex items-center space-x-2">
                   <span className="font-medium text-gray-900">
-                    {review.User.firstName} {review.User.lastName}
+                    {review.User?.firstName || 'Нет имени'} {review.User?.lastName || ''}
                   </span>
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (
@@ -87,11 +108,11 @@ export default function ReviewManagement() {
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  {review.Tour.title}
+                  {review.Tour?.title || 'Тур не найден'}
                 </p>
-                <p className="mt-2 text-gray-600">{review.comment}</p>
+                <p className="mt-2 text-gray-600">{review.comment || 'Отзыв без комментария'}</p>
                 <p className="text-sm text-gray-500 mt-2">
-                  {new Date(review.createdAt).toLocaleDateString()}
+                  {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : 'Дата не указана'}
                 </p>
               </div>
               {!review.moderated && (

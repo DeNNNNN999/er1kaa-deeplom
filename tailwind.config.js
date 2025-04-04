@@ -8,4 +8,9 @@ export default {
     extend: {},
   },
   plugins: [],
+  // Явно задаем темный цвет текста для всех форм
+  darkMode: false,
+  variants: {
+    extend: {},
+  },
 }

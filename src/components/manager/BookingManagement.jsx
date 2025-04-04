@@ -6,7 +6,11 @@ import {
   DollarSign, 
   Check, 
   X, 
-  AlertCircle
+  AlertCircle,
+  Clock,
+  Tag,
+  Phone,
+  Mail
 } from 'lucide-react'
 
 export default function BookingManagement() {
@@ -25,23 +29,22 @@ export default function BookingManagement() {
       setError(null)
       
       const token = localStorage.getItem('token')
-      // Определяем роль пользователя
-      const user = JSON.parse(localStorage.getItem('user'))
-      const apiUrl = user?.role === 'ADMIN' 
-        ? 'http://localhost:5000/api/admin/bookings'
-        : 'http://localhost:5000/api/manager/bookings'
+      console.log('Запрашиваем бронирования для менеджера...')
       
-      const response = await fetch(apiUrl, {
+      const response = await fetch('http://localhost:5000/api/manager/bookings', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
+      
+      console.log('Статус ответа:', response.status)
       
       if (!response.ok) {
         throw new Error(`HTTP ошибка: ${response.status}`)
       }
       
       const data = await response.json()
+      console.log('Получены данные:', data)
       
       // Проверка, что data - это массив
       if (!Array.isArray(data)) {
@@ -62,12 +65,8 @@ export default function BookingManagement() {
     try {
       setUpdating(true)
       const token = localStorage.getItem('token')
-      const user = JSON.parse(localStorage.getItem('user'))
-      const apiUrl = user?.role === 'ADMIN' 
-        ? `http://localhost:5000/api/admin/bookings/${bookingId}/status`
-        : `http://localhost:5000/api/manager/bookings/${bookingId}/status`
       
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`http://localhost:5000/api/manager/bookings/${bookingId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -135,9 +134,13 @@ export default function BookingManagement() {
         <h2 className="text-2xl font-semibold text-gray-900">
           Управление бронированиями
         </h2>
-        <span className="text-gray-500 text-sm">
-          Всего бронирований: {bookings.length}
-        </span>
+        <button
+          onClick={fetchBookings}
+          className="flex items-center px-3 py-2 bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 transition-colors"
+        >
+          <Clock className="w-4 h-4 mr-2" />
+          <span>Обновить данные</span>
+        </button>
       </div>
 
       {bookings.length === 0 ? (
@@ -147,7 +150,7 @@ export default function BookingManagement() {
           <p className="mt-1 text-sm text-gray-500">Бронирования пока отсутствуют</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto bg-white rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -158,13 +161,13 @@ export default function BookingManagement() {
                   Клиент
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Дата
+                  Контакты
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Участники
+                  Дата поездки
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Сумма
+                  Детали
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Статус
@@ -183,16 +186,36 @@ export default function BookingManagement() {
                   className="hover:bg-gray-50"
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {booking.Tour?.title || 'Без названия'}
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-md bg-indigo-100 flex items-center justify-center">
+                        <Tag className="h-5 w-5 text-indigo-600" />
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {booking.Tour?.title || 'Без названия'}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          ID: {booking.id}
+                        </div>
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm font-medium text-gray-900">
                       {booking.User?.firstName || ''} {booking.User?.lastName || ''}
                     </div>
-                    <div className="text-sm text-gray-500">
-                      {booking.User?.email || ''}
+                    <div className="text-xs text-gray-500">
+                      Забронировано: {new Date(booking.createdAt).toLocaleDateString()}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 mb-1 flex items-center">
+                      <Mail className="w-3 h-3 mr-1 text-gray-500" />
+                      {booking.User?.email || 'Не указан'}
+                    </div>
+                    <div className="text-sm text-gray-900 flex items-center">
+                      <Phone className="w-3 h-3 mr-1 text-gray-500" />
+                      {booking.User?.phone || 'Не указан'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -202,15 +225,13 @@ export default function BookingManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-900">
+                    <div className="flex items-center text-sm text-gray-900 mb-1">
                       <Users className="w-4 h-4 mr-2 text-gray-500" />
-                      {booking.participants || 0}
+                      <span>Участников: {booking.participants || 0}</span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center text-sm font-medium text-gray-900">
                       <DollarSign className="w-4 h-4 mr-1 text-gray-500" />
-                      {booking.totalPrice?.toLocaleString() || 0} ₽
+                      <span>Сумма: {booking.totalPrice?.toLocaleString() || 0} ₽</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -221,7 +242,11 @@ export default function BookingManagement() {
                       booking.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {booking.status || 'Неизвестно'}
+                      {booking.status === 'PENDING' ? 'Ожидает' :
+                       booking.status === 'CONFIRMED' ? 'Подтверждено' :
+                       booking.status === 'CANCELLED' ? 'Отменено' :
+                       booking.status === 'COMPLETED' ? 'Завершено' :
+                       booking.status || 'Неизвестно'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">

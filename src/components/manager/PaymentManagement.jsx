@@ -92,18 +92,18 @@ export default function PaymentManagement() {
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
-                    {payment.Booking.Tour.title}
+                    {payment.Booking?.Tour?.title || 'Тур не найден'}
                   </div>
                   <div className="text-sm text-gray-500">
-                    ID: {payment.Booking.id}
+                    ID: {payment.Booking?.id || 'N/A'}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {payment.Booking.User.firstName} {payment.Booking.User.lastName}
+                    {payment.Booking?.User?.firstName || 'Нет имени'} {payment.Booking?.User?.lastName || ''}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {payment.Booking.User.email}
+                    {payment.Booking?.User?.email || 'Нет email'}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

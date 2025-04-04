@@ -1,5 +1,5 @@
 import express from 'express';
-import { Review, Booking } from '../models/index.js';
+import { Review, Booking, User } from '../models/index.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -7,15 +7,18 @@ const router = express.Router();
 // Получить отзывы для тура
 router.get('/tour/:tourId', async (req, res) => {
   try {
+    console.log('Запрос на получение отзывов для тура:', req.params.tourId);
     const reviews = await Review.findAll({
-      where: { tourId: req.params.tourId },
+      where: { TourId: req.params.tourId },
       include: [{ 
         model: User,
         attributes: ['firstName', 'lastName']
       }]
     });
+    console.log('Найдено отзывов:', reviews.length);
     res.json(reviews);
   } catch (error) {
+    console.error('Ошибка при получении отзывов:', error);
     res.status(500).json({ message: 'Ошибка при получении отзывов', error: error.message });
   }
 });
@@ -23,16 +26,21 @@ router.get('/tour/:tourId', async (req, res) => {
 // Создать отзыв
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { tourId, rating, comment } = req.body;
+    console.log('Запрос на создание отзыва:', req.body);
+    console.log('Пользователь:', req.user.id);
+    
+    const { TourId, rating, comment } = req.body;
 
     // Проверяем, есть ли завершенное бронирование
     const booking = await Booking.findOne({
       where: {
-        userId: req.user.id,
-        tourId,
+        UserId: req.user.id,
+        TourId: TourId,
         status: 'COMPLETED'
       }
     });
+
+    console.log('Завершенное бронирование:', booking);
 
     if (!booking) {
       return res.status(403).json({ 
@@ -43,10 +51,12 @@ router.post('/', authenticate, async (req, res) => {
     // Проверяем, не оставлял ли пользователь уже отзыв
     const existingReview = await Review.findOne({
       where: {
-        userId: req.user.id,
-        tourId
+        UserId: req.user.id,
+        TourId: TourId
       }
     });
+    
+    console.log('Существующий отзыв:', existingReview);
 
     if (existingReview) {
       return res.status(400).json({ 
@@ -55,14 +65,17 @@ router.post('/', authenticate, async (req, res) => {
     }
 
     const review = await Review.create({
-      userId: req.user.id,
-      tourId,
+      UserId: req.user.id,
+      TourId: TourId,
       rating,
       comment
     });
-
+    
+    console.log('Создан отзыв:', review);
+    
     res.status(201).json(review);
   } catch (error) {
+    console.error('Ошибка при создании отзыва:', error);
     res.status(500).json({ message: 'Ошибка при создании отзыва', error: error.message });
   }
 });
@@ -73,7 +86,7 @@ router.delete('/:id', authenticate, async (req, res) => {
     const review = await Review.findOne({
       where: {
         id: req.params.id,
-        userId: req.user.id
+        UserId: req.user.id
       }
     });
 

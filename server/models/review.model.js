@@ -24,10 +24,10 @@ const Review = sequelize.define('Review', {
 });
 
 // Связи
-Review.belongsTo(User);
-User.hasMany(Review);
+Review.belongsTo(User, { foreignKey: 'UserId' });
+User.hasMany(Review, { foreignKey: 'UserId' });
 
-Review.belongsTo(Tour);
-Tour.hasMany(Review);
+Review.belongsTo(Tour, { foreignKey: 'TourId' });
+Tour.hasMany(Review, { foreignKey: 'TourId' });
 
 export default Review;

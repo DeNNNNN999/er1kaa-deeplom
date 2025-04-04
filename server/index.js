@@ -18,6 +18,7 @@ import managerReviewsRoutes from './routes/manager/reviews.routes.js'
 import managerAnalyticsRoutes from './routes/manager/analytics.routes.js'
 import managerPaymentsRoutes from './routes/manager/payments.routes.js'
 import adminBookingsRoutes from './routes/admin/bookings.routes.js'
+import managerBookingsRoutes from './routes/manager/bookings.routes.js'
 
 dotenv.config()
 
@@ -43,10 +44,11 @@ app.use('/api/admin/locations', adminLocationsRoutes)
 app.use('/api/admin/discounts', adminDiscountsRoutes)
 app.use('/api/admin/refunds', adminRefundsRoutes)
 app.use('/api/admin/tour-dates', adminTourDatesRoutes)
+app.use('/api/admin/bookings', adminBookingsRoutes)
 app.use('/api/manager/reviews', managerReviewsRoutes)
 app.use('/api/manager/analytics', managerAnalyticsRoutes)
 app.use('/api/manager/payments', managerPaymentsRoutes)
-app.use('/api/admin/bookings', adminBookingsRoutes)
+app.use('/api/manager/bookings', managerBookingsRoutes)
 
 // Database connection and server start
 async function startServer() {

@@ -1,3 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Глобальные стили для полей ввода */
+input, textarea, select {
+  @apply text-gray-900 border border-gray-300 focus:ring-blue-500 focus:border-blue-500;
+}
+
+/* Пофиксим стили для admin/manager интерфейса */
+.ring-offset-white {
+  --tw-ring-offset-color: theme('colors.white');
+}
+

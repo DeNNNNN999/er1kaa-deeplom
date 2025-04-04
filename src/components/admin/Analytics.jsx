@@ -14,22 +14,57 @@ export default function Analytics() {
   const fetchAnalytics = async () => {
     try {
       const token = localStorage.getItem('token')
+      if (!token) {
+        setError('Требуется авторизация')
+        setLoading(false)
+        return
+      }
+
+      console.log('Запрос аналитики...')
       const response = await fetch('http://localhost:5000/api/admin/analytics', {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       })
+
+      if (!response.ok) {
+        let errorMessage = 'Ошибка сервера'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorMessage
+        } catch (e) {
+          // Если ответ не в формате JSON
+          const errorText = await response.text()
+          console.error('Текст ошибки:', errorText)
+        }
+        throw new Error(errorMessage)
+      }
+
       const data = await response.json()
-      setStats(data)
+      console.log('Получены данные аналитики:', data)
+
+      // Безопасно устанавливаем данные, гарантируя что у нас есть нужная структура
+      setStats({
+        totalRevenue: data.totalRevenue || 0,
+        activeTours: data.activeTours || 0,
+        newUsers: data.newUsers || 0,
+        salesGrowth: data.salesGrowth || 0,
+        popularTours: Array.isArray(data.popularTours) ? data.popularTours : [],
+        categoryStats: Array.isArray(data.categoryStats) ? data.categoryStats : [],
+        monthlySales: Array.isArray(data.monthlySales) ? data.monthlySales : [],
+        countrySales: Array.isArray(data.countrySales) ? data.countrySales : [],
+        tourRatings: Array.isArray(data.tourRatings) ? data.tourRatings : [],
+      })
     } catch (err) {
-      setError('Ошибка при загрузке аналитики')
+      console.error('Ошибка при загрузке аналитики:', err)
+      setError(err.message || 'Ошибка при загрузке аналитики')
     } finally {
       setLoading(false)
     }
   }
 
   if (loading) return <div className="text-center">Загрузка...</div>
-  if (error) return <div className="text-red-500 text-center">{error}</div>
+  if (error) return <div className="text-center text-red-500">{error}</div>
   if (!stats) return null
 
   const cards = [
@@ -61,14 +96,14 @@ export default function Analytics() {
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {cards.map((card, index) => (
           <motion.div
             key={card.title}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-white rounded-lg shadow-lg overflow-hidden"
+            className="overflow-hidden bg-white rounded-lg shadow-lg"
           >
             <div className="p-6">
               <div className="flex items-center">
@@ -87,10 +122,10 @@ export default function Analytics() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Продажи по месяцам */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div className="p-6 bg-white rounded-lg shadow-lg">
+          <h3 className="flex items-center mb-4 text-lg font-semibold text-gray-900">
             <Calendar className="w-5 h-5 mr-2" />
             Продажи по месяцам
           </h3>
@@ -103,9 +138,9 @@ export default function Analytics() {
                     {month.revenue} ₽
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full h-2 bg-gray-200 rounded-full">
                   <div
-                    className="bg-blue-600 h-2 rounded-full"
+                    className="h-2 bg-blue-600 rounded-full"
                     style={{ width: `${month.percentage}%` }}
                   />
                 </div>
@@ -115,8 +150,8 @@ export default function Analytics() {
         </div>
 
         {/* Продажи по странам */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div className="p-6 bg-white rounded-lg shadow-lg">
+          <h3 className="flex items-center mb-4 text-lg font-semibold text-gray-900">
             <Map className="w-5 h-5 mr-2" />
             Продажи по странам
           </h3>
@@ -129,9 +164,9 @@ export default function Analytics() {
                     {country.revenue} ₽
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full h-2 bg-gray-200 rounded-full">
                   <div
-                    className="bg-green-600 h-2 rounded-full"
+                    className="h-2 bg-green-600 rounded-full"
                     style={{ width: `${country.percentage}%` }}
                   />
                 </div>
@@ -141,8 +176,8 @@ export default function Analytics() {
         </div>
 
         {/* Рейтинги туров */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div className="p-6 bg-white rounded-lg shadow-lg">
+          <h3 className="flex items-center mb-4 text-lg font-semibold text-gray-900">
             <Star className="w-5 h-5 mr-2" />
             Рейтинги туров
           </h3>
@@ -172,8 +207,8 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="p-6 bg-white rounded-lg shadow-lg">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
             Популярные туры
           </h3>
           <div className="space-y-4">
@@ -183,7 +218,7 @@ export default function Analytics() {
                 className="flex items-center justify-between"
               >
                 <div className="flex items-center">
-                  <span className="text-lg font-bold text-gray-400 mr-4">
+                  <span className="mr-4 text-lg font-bold text-gray-400">
                     #{index + 1}
                   </span>
                   <div>
@@ -199,8 +234,8 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="p-6 bg-white rounded-lg shadow-lg">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
             Продажи по категориям
           </h3>
           <div className="space-y-4">
@@ -212,9 +247,9 @@ export default function Analytics() {
                     {category.revenue} ₽
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full h-2 bg-gray-200 rounded-full">
                   <div
-                    className="bg-blue-600 h-2 rounded-full"
+                    className="h-2 bg-blue-600 rounded-full"
                     style={{ width: `${category.percentage}%` }}
                   />
                 </div>

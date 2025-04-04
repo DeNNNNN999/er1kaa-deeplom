@@ -10,7 +10,7 @@ router.get('/', authenticate, async (req, res) => {
     const payments = await Payment.findAll({
       include: [{
         model: Booking,
-        where: { userId: req.user.id },
+        where: { UserId: req.user.id },
         include: ['Tour']
       }]
     });
@@ -29,7 +29,7 @@ router.post('/', authenticate, async (req, res) => {
     const booking = await Booking.findOne({
       where: {
         id: bookingId,
-        userId: req.user.id,
+        UserId: req.user.id,
         status: 'PENDING'
       }
     });
@@ -51,7 +51,10 @@ router.post('/', authenticate, async (req, res) => {
     // В реальном приложении здесь была бы интеграция с платежной системой
     // Для демонстрации сразу помечаем как выполненный
     await payment.update({ status: 'COMPLETED' });
-    await booking.update({ status: 'CONFIRMED' });
+    await booking.update({ 
+      status: 'CONFIRMED',
+      paymentStatus: 'PAID' 
+    });
 
     res.status(201).json(payment);
   } catch (error) {

@@ -4,19 +4,20 @@ import { authenticate, checkRole } from '../../middleware/auth.middleware.js'
 
 const router = express.Router()
 
-// Middleware для проверки прав администратора
-router.use(authenticate, checkRole(['ADMIN']))
+// Middleware для проверки прав менеджера
+router.use(authenticate, checkRole(['MANAGER']))
 
 // Получить все бронирования
 router.get('/', async (req, res) => {
   try {
-    console.log('Запрос на получение бронирований для администратора')
+    console.log('Запрос на получение бронирований от менеджера')
 
     if (!Booking || !Tour || !User) {
       console.error('Ошибка: модели не импортированы корректно')
       return res.status(500).json({ message: 'Ошибка конфигурации сервера' })
     }
 
+    // Получаем бронирования с включением связанных моделей
     const bookings = await Booking.findAll({
       include: [
         {
@@ -31,11 +32,11 @@ router.get('/', async (req, res) => {
       order: [['createdAt', 'DESC']]
     })
 
-    console.log(`Найдено ${bookings.length} бронирований`)
+    console.log(`Найдено ${bookings.length} бронирований для менеджера`)
     // Всегда возвращаем массив, даже если данных нет
-    return res.json(bookings || [])
+    return res.json(bookings || []) 
   } catch (error) {
-    console.error('Ошибка в маршруте бронирований:', error)
+    console.error('Ошибка в маршруте бронирований менеджера:', error)
     return res.status(500).json({
       message: 'Ошибка при получении бронирований',
       error: error.message,
